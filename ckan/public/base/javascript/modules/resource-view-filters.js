@@ -102,7 +102,6 @@ this.ckan.module('resource-view-filters', function (jQuery, _) {
                 query;
 
             query = {
-              plain: false,
               resource_id: resourceId,
               limit: queryLimit,
               offset: offset,
@@ -113,7 +112,11 @@ this.ckan.module('resource-view-filters', function (jQuery, _) {
 
             if (term !== '') {
               var q = {};
-              q[filterName] = term + ':*';
+              if (!term.includes(' ')) {
+                term = term + ':*';
+                query.plain = false;
+              }
+              q[filterName] = term;
               query.q = JSON.stringify(q);
             }
 
