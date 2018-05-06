@@ -107,7 +107,8 @@ this.ckan.module('resource-view-filters', function (jQuery, _) {
               offset: offset,
               fields: filterName,
               distinct: true,
-              sort: filterName
+              sort: filterName,
+              include_total: false
             };
 
             if (term !== '') {
