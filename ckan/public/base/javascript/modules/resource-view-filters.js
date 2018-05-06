@@ -124,7 +124,7 @@ this.ckan.module('resource-view-filters', function (jQuery, _) {
           },
           results: function (data, page) {
             var records = data.result.records,
-                hasMore = (records.length < data.result.total),
+                hasMore = (records.length == queryLimit),
                 results;
 
             results = $.map(records, function (record) {
