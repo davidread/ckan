@@ -25,9 +25,9 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
 
         app = self._get_test_app()
         response = app.get('/datastore/dump/{0}'.format(str(resource['id'])))
-        assert_equals('_id,book\r\n'
-                      '1,annakarenina\n'
-                      '2,warandpeace\n',
+        assert_equals('book\r\n'
+                      'annakarenina\n'
+                      'warandpeace\n',
                       response.body)
 
     def test_all_fields_types(self):
@@ -89,7 +89,7 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
         response = app.get('/datastore/dump/{0}'.format(str(resource['id'])))
         content = response.body.decode('utf-8')
         expected = (
-            u'_id,b\xfck,author,published'
+            u'b\xfck,author,published'
             u',characters,random_letters,nested')
         assert_equals(content[:len(expected)], expected)
         assert_in('warandpeace', content)
@@ -111,9 +111,9 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
         app = self._get_test_app()
         # get with alias instead of id
         response = app.get('/datastore/dump/books')
-        assert_equals('_id,book\r\n'
-                      '1,annakarenina\n'
-                      '2,warandpeace\n',
+        assert_equals('book\r\n'
+                      'annakarenina\n'
+                      'warandpeace\n',
                       response.body)
 
     def test_dump_does_not_exist_raises_404(self):
@@ -137,19 +137,74 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
             resource['id'])))
         content = response.body.decode('utf-8')
         expected_content = (
-            u'_id,book\r\n'
-            u'1,annakarenina\n')
+            u'book\r\n'
+            u'annakarenina\n')
         assert_equals(content, expected_content)
 
     def test_dump_q_and_fields(self):
-        auth = {'Authorization': str(self.normal_user.apikey)}
-        res = self.app.get('/datastore/dump/{0}?q=warandpeace&fields=nested,author&format=json'.format(str(
-            self.data['resource_id'])), extra_environ=auth)
-        content = res.body.decode('utf-8')
+        resource = factories.Resource()
+        data = {
+            'resource_id': resource['id'],
+            'force': True,
+            'fields': [
+                {
+                    'id': u'b\xfck',
+                    'type': 'text'
+                },
+                {
+                    'id': 'author',
+                    'type': 'text'
+                },
+                {
+                    'id': 'published'
+                },
+                {
+                    'id': u'characters',
+                    u'type': u'_text'
+                },
+                {
+                    'id': 'random_letters',
+                    'type': 'text[]'
+                }
+            ],
+            'records': [
+                {
+                    u'b\xfck': 'annakarenina',
+                    'author': 'tolstoy',
+                    'published': '2005-03-01',
+                    'nested': [
+                        'b',
+                        {'moo': 'moo'}
+                    ],
+                    u'characters': [
+                        u'Princess Anna',
+                        u'Sergius'
+                    ],
+                    'random_letters': [
+                        'a', 'e', 'x'
+                    ]
+                },
+                {
+                    u'b\xfck': 'warandpeace',
+                    'author': 'tolstoy',
+                    'nested': {'a': 'b'},
+                    'random_letters': [
+
+                    ]
+                }
+            ]
+        }
+        helpers.call_action('datastore_create', **data)
+
+        app = self._get_test_app()
+        response = app.get(
+            u'/datastore/dump/{0}?q=warandpeace&fields=nested,author'
+            .format(resource['id']))
+        content = response.body.decode('utf-8')
 
         expected_content = (
             u'nested,author\r\n'
-            u'"{""a"": ""b""}",tolstoy\r\n')
+            u'"{""a"": ""b""}",tolstoy\n')
         assert_equals(content, expected_content)
 
     def test_dump_tsv(self):
@@ -213,8 +268,8 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
         content = res.body.decode('utf-8')
 
         expected_content = (
-            u'_id\tb\xfck\tauthor\tpublished\tcharacters\trandom_letters\t'
-            u'nested\r\n1\tannakarenina\ttolstoy\t2005-03-01T00:00:00\t'
+            u'b\xfck\tauthor\tpublished\tcharacters\trandom_letters\t'
+            u'nested\r\nannakarenina\ttolstoy\t2005-03-01T00:00:00\t'
             u'"[""Princess Anna"",""Sergius""]"\t'
             u'"[""a"",""e"",""x""]"\t"[""b"", '
             u'{""moo"": ""moo""}]"\n')
@@ -280,12 +335,12 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
             str(resource['id'])))
         content = res.body.decode('utf-8')
         expected_content = (
-            u'{\n  "fields": [{"type":"int","id":"_id"},{"type":"text",'
+            u'{\n  "fields": [{"type":"text",'
             u'"id":"b\xfck"},{"type":"text","id":"author"},{"type":"timestamp"'
             u',"id":"published"},{"type":"_text","id":"characters"},'
             u'{"type":"_text","id":"random_letters"},{"type":"json",'
             u'"id":"nested"}],\n  "records": [\n    '
-            u'[1,"annakarenina","tolstoy","2005-03-01T00:00:00",'
+            u'["annakarenina","tolstoy","2005-03-01T00:00:00",'
             u'["Princess Anna","Sergius"],["a","e","x"],["b",'
             u'{"moo":"moo"}]]\n]}\n')
         assert_equals(content, expected_content)
@@ -351,7 +406,7 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
         content = res.body.decode('utf-8')
         expected_content = (
             u'<data>\n'
-            r'<row _id="1">'
+            r'<row>'
             u'<b\xfck>annakarenina</b\xfck>'
             u'<author>tolstoy</author>'
             u'<published>2005-03-01T00:00:00</published>'
@@ -507,10 +562,10 @@ class TestDatastoreDump(DatastoreFunctionalTestBase):
 
 
 def get_csv_record_values(response_body):
-    return [int(record.split(',')[1])
+    return [int(record)
             for record in response_body.split()[1:]]
 
 
 def get_json_record_values(response_body):
-    return [record[1]
+    return [record[0]
             for record in json.loads(response_body)['records']]

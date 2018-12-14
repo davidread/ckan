@@ -15,7 +15,7 @@ jobs:
           PGPASSWORD: ckan
           NODE_TESTS_CONTAINER: 2
           NOSETEST_COMMON_OPTIONS: -v --ckan --reset-db --with-pylons=test-core-circle-ci.ini --nologcapture --with-coverage --cover-package=ckan --cover-package=ckanext --with-xunit --xunit-file=/root/junit/junit.xml ckan ckanext
-      - image: postgres:10
+      - image: postgres:9
         environment:
           POSTGRES_USER: ckan
           POSTGRES_PASSWORD: ckan
