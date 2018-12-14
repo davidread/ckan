@@ -2,6 +2,7 @@
 
 from nose.tools import assert_equals, assert_in
 import mock
+
 import json
 
 from ckanext.datastore.tests.helpers import DatastoreFunctionalTestBase
